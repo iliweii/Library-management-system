@@ -1,0 +1,10 @@
+# depslib dependency file v1.0
+1562047912 source:c:\users\administrator\desktop\图书馆借书系统\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+	<windows.h>
+	<conio.h>
+	<memory.h>
+
