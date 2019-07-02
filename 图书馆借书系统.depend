@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1562047912 source:c:\users\administrator\desktop\图书馆借书系统\main.c
+1562058325 source:c:\users\administrator\desktop\图书馆借书系统\main.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>

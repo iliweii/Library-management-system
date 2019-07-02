@@ -6,62 +6,75 @@
 #include <conio.h>
 #include <memory.h>
 
-struct cookie   // ä¿å­˜å½“å‰ç”¨æˆ·ç™»é™†ä¿¡æ¯
+struct cookie   // ±£´æµ±Ç°ÓÃ»§µÇÂ½ĞÅÏ¢
 {
     char username[55];
 };
-struct userinfo   // ä¿å­˜æ‰€æœ‰ç”¨æˆ·å®Œæ•´ä¿¡æ¯
+struct userinfo   // ±£´æËùÓĞÓÃ»§ÍêÕûĞÅÏ¢
 {
     char username[55], password[55];
     char age[10];
-    int status; // çŠ¶æ€1:è´¦å·æ³¨å†ŒæˆåŠŸï¼Œ 0:è´¦å·å¾…é€šè¿‡
+    int status; // ×´Ì¬1:ÕËºÅ×¢²á³É¹¦£¬ 0:ÕËºÅ´ıÍ¨¹ı
     char sex[10]; // male or female
     char contact[55];
 };
-
-int WIDTH = 41; // ç”¨æˆ·ç•Œé¢å®½åº¦
-int OpWidth = 12; // ç”¨æˆ·æ“ä½œå®½åº¦
-int UserNum = 0; // ç”¨æˆ·æ€»æ•°
-int i, j, k;
-char BORDER[] = { '#', '*', '+', '@', '`', '-', '='}; // è¾¹æ¡†éšæœºå­—ç¬¦
+struct bookinfo // ±£´æËùÓĞÍ¼ÊéĞÅÏ¢
+{
+    char bookNum[55], bookName[55], author[55]; // ÊéºÅ£¬ÊéÃû£¬×÷ÕßÃû
+    char publishingHouse[55], publicshingTime[55]; // ³ö°æÉç£¬³ö°æÊ±¼ä
+    char bookPrice[55]; // ¸ÃÊéµÄ¼Û¸ñ
+};
+int WIDTH = 41; // ÓÃ»§½çÃæ¿í¶È
+int OpWidth = 12; // ÓÃ»§²Ù×÷¿í¶È
+int UserNum = 0, BookNum = 0; // ÓÃ»§×ÜÊı, Í¼Êé×ÜÊı
+int i, j, k; // ÌáÇ°¶¨ÒåÑ­»·±äÁ¿
+char BORDER[] = { '#', '*', '+', '@', '`', '-', '='}; // ±ß¿òËæ»ú×Ö·û
 char OpLine = '-', BorderLeft = '|';
 typedef struct cookie COOKIE;
 typedef struct userinfo USERINFO;
-COOKIE userCookie; // ç™»å½•ä¿¡æ¯
-USERINFO USER[5000], CurrentUser; // ç”¨æˆ·ä¿¡æ¯ç»“æ„ä½“æ•°ç»„
+typedef struct bookinfo BOOKINFO;
+COOKIE userCookie; // µÇÂ¼ĞÅÏ¢
+USERINFO USER[5000], CurrentUser; // ÓÃ»§ĞÅÏ¢½á¹¹ÌåÊı×é
+BOOKINFO BOOK[5000]; // Í¼ÊéĞÅÏ¢½á¹¹ÌåÊı×é
 
-char RandomNumber(char str[], int n); // è¿”å›éšæœºæ•°å‡½æ•°
-int ChooseVerify(int minNumber, int maxNumber); // é€‰æ‹©éªŒè¯å‡½æ•°
-void loginVerify(char username[]); // ç™»å½•éªŒè¯å‡½æ•°
-void BackgroundColor(); // èƒŒæ™¯è‰²å‡½æ•°
-void SystemOp(char str[]); // æ§åˆ¶å°æ“ä½œå‡½æ•°
+char RandomNumber(char str[], int n); // ·µ»ØËæ»úÊıº¯Êı
+int ChooseVerify(int minNumber, int maxNumber); // Ñ¡ÔñÑéÖ¤º¯Êı
+void loginVerify(char username[]); // µÇÂ¼ÑéÖ¤º¯Êı
+void BackgroundColor(); // ±³¾°É«º¯Êı
+void SystemOp(char str[]); // ¿ØÖÆÌ¨²Ù×÷º¯Êı
 
-void index(); // ä¸»é¡µå‡½æ•°
-void login(); // ç™»å½•å‡½æ•°
-void UserRegister();// ç”¨æˆ·æ³¨å†Œå‡½æ•°
-void MainMenu(); // ä¸»èœå•å‡½æ•°
+void index(); // Ö÷Ò³º¯Êı
+void login(); // µÇÂ¼º¯Êı
+void UserRegister();// ÓÃ»§×¢²áº¯Êı
+void MainMenu(); // Ö÷²Ëµ¥º¯Êı
+/* Í¼Êé¹ÜÀíÏµÍ³Ö÷Ä£¿é */
+void InformationEntry(); // Í¼ÊéĞÅÏ¢Â¼Èëº¯Êı
+void InformationBrowsing(); // Í¼ÊéĞÅÏ¢ä¯ÀÀº¯Êı
+void InformationInquiry(); // Í¼ÊéĞÅÏ¢²éÑ¯º¯Êı
+void InformationDelete(); // Í¼ÊéĞÅÏ¢É¾³ıº¯Êı
+void InformationModify(); // Í¼ÊéĞÅÏ¢ĞŞ¸Äº¯Êı
 
 
 int main()
 {
-    // å®ç°éšæœºèƒŒæ™¯è‰²
+    // ÊµÏÖËæ»ú±³¾°É«
     BackgroundColor();
-    // å®ç°ç”¨æˆ·æˆ–è€…ç®¡ç†å‘˜ç™»å½•
+    // ÊµÏÖÓÃ»§»òÕß¹ÜÀíÔ±µÇÂ¼
     index();
-    // è¿›å…¥ä¸»èœå•
+    // ½øÈëÖ÷²Ëµ¥
     MainMenu();
     return 0;
 }
 
-/// ä¸»é¡µ
+/// Ö÷Ò³
 void index()
 {
     SystemOp("cls");
     int chooseNumber;
     char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
 
-    printf("ESCé”®é€€å‡ºç³»ç»Ÿ\n");
-    printf("\n\n\n\t\t\t\tæ¬¢è¿æ¥åˆ°å›¾ä¹¦é¦†ï¼\n\n");
+    printf("ESC¼üÍË³öÏµÍ³ / Tab¼üÇĞ»»±³¾°É«\n");
+    printf("\n\n\n\t\t\t\t»¶Ó­À´µ½Í¼Êé¹İ£¡\n\n");
     printf("\n\t\t");
     for( i = 0; i < WIDTH; i++ )
         printf("%c", borderChar);
@@ -72,7 +85,7 @@ void index()
     printf("\t%c", '1');
     for( i = 0; i < OpWidth; i++ )
         printf("%c", OpLine);
-    printf("ç®¡ç†å‘˜ç™»å½• \t|\n");
+    printf("¹ÜÀíÔ±µÇÂ¼ \t|\n");
     printf("\t\t%c", BorderLeft);
     for( i = 0; i < WIDTH-2; i++ )
         printf(" ");
@@ -80,7 +93,7 @@ void index()
     printf("\t%c", '2');
     for( i = 0; i < OpWidth; i++ )
         printf("%c", OpLine);
-    printf("å€Ÿé˜…è€…ç™»å½• \t|\n");
+    printf("½èÔÄÕßµÇÂ¼ \t|\n");
     printf("\t\t%c", BorderLeft);
     for( i = 0; i < WIDTH-2; i++ )
         printf(" ");
@@ -100,11 +113,9 @@ void index()
     {
         login(chooseNumber);
     }
-
-    return;
 }
 
-/// ç™»å½•å‡½æ•°
+/// µÇÂ¼º¯Êı£¨¹ÜÀíÔ±µÇÂ¼ºÍÓÃ»§µÇÂ¼£¬ ÓÃ»§¿É×¢²áºÍÖ±½ÓµÇÂ¼£©
 void login(int chooseNumber)
 {
     SystemOp("cls");
@@ -112,7 +123,7 @@ void login(int chooseNumber)
     int backStatus, userChooseNumber, fileFlag, fileNum;
     char fileStr[55], username[55];
 
-    // ä»æ–‡ä»¶è¯»å–æ•°æ®ï¼Œä¿å­˜åˆ°ç»“æ„ä½“ä¸­
+    // ´ÓÎÄ¼ş¶ÁÈ¡Êı¾İ£¬±£´æµ½½á¹¹ÌåÖĞ
     FILE *fp = NULL;
     fp = fopen("userinfo.txt", "a+");
     fileFlag = 0, fileNum = 0;
@@ -120,7 +131,7 @@ void login(int chooseNumber)
     {
         if(fgets(fileStr, 55, fp)!=NULL)
         {
-            fileStr[strlen(fileStr)-1]='\0'; // å»é™¤å­—ç¬¦ä¸²æœ«å°¾\n
+            fileStr[strlen(fileStr)-1]='\0'; // È¥³ı×Ö·û´®Ä©Î²\n
             switch(fileFlag)
             {
             case 0:
@@ -153,8 +164,8 @@ void login(int chooseNumber)
     UserNum = fileNum;
     fclose(fp);
 
-    printf("\n\n\n\t\t\t\tè¯·ç™»å½•|å›¾ä¹¦é¦†ï¼\n\n");
-    printf("\t\tESCé”®è¿”å›é¦–é¡µ->\n\t\t");
+    printf("\n\n\n\t\t\t\tÇëµÇÂ¼|Í¼Êé¹İ£¡\n\n");
+    printf("\t\tESC¼ü·µ»ØÊ×Ò³->\n\t\t");
     for( i = 0; i < WIDTH; i++ )
         printf("%c", borderChar);
     printf("\n\t\t%c", BorderLeft);
@@ -165,8 +176,8 @@ void login(int chooseNumber)
     {
     case 1:
     {
-        // ç®¡ç†å‘˜ç™»å½•
-        printf("\tç®¡ç†å‘˜ :\tadmin\t\t%c\n", BorderLeft);
+        // ¹ÜÀíÔ±µÇÂ¼
+        printf("\t¹ÜÀíÔ± :\tadmin\t\t%c\n", BorderLeft);
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -178,9 +189,9 @@ void login(int chooseNumber)
         loginVerify("admin");
     }
     break;
-    case 2:   // å€Ÿé˜…è€…ç™»å½•
+    case 2:   // ½èÔÄÕßµÇÂ¼
     {
-        printf("\tå€Ÿé˜…è€…ç™»å½•\t\t\t%c\n", BorderLeft);
+        printf("\t½èÔÄÕßµÇÂ¼\t\t\t%c\n", BorderLeft);
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -188,7 +199,7 @@ void login(int chooseNumber)
         printf("\t%c", '1');
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
-        printf("æ–°ç”¨æˆ·æ³¨å†Œ \t|\n");
+        printf("ĞÂÓÃ»§×¢²á \t|\n");
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -196,7 +207,7 @@ void login(int chooseNumber)
         printf("\t%c", '2');
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
-        printf("ç›´æ¥ç™»é™†\t \t|\n");
+        printf("Ö±½ÓµÇÂ½\t \t|\n");
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -207,17 +218,17 @@ void login(int chooseNumber)
 
         userChooseNumber = ChooseVerify(1, 2);
 
-        if(userChooseNumber == 1)   // æ–°ç”¨æˆ·æ³¨å†Œ
+        if(userChooseNumber == 1)   // ĞÂÓÃ»§×¢²á
         {
-            // æ³¨å†Œå‡½æ•°
+            // ×¢²áº¯Êı
             UserRegister();
         }
-        else if(userChooseNumber == 2)     // ç›´æ¥ç™»é™†
+        else if(userChooseNumber == 2)     // Ö±½ÓµÇÂ½
         {
             printf("\n\n\t\t");
             for( i = 0; i < WIDTH; i++ )
                 printf("%c", borderChar);
-            printf("\n\t\t\tä½ çš„ç”¨æˆ·åï¼š");
+            printf("\n\t\t\tÄãµÄÓÃ»§Ãû£º");
             gets(username);
             loginVerify(username);
         }
@@ -229,21 +240,20 @@ void login(int chooseNumber)
     }
     break;
     }
-    return;
 }
 
-/// ç”¨æˆ·æ³¨å†Œå‡½æ•°
+/// ÓÃ»§×¢²áº¯Êı£¨ÓÃÓÚĞÂÓÃ»§×¢²á£¬Ö¸ÏòÎÄ¼şuserinfo.txt£©
 void UserRegister()
 {
     SystemOp("cls");
     int usernameFlag = 0;
     char Password[55], rePassword[55];
     char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
-    USERINFO newUser; // åˆ›å»ºæ–°ç”¨æˆ·
-    FILE *fp = NULL; // æ‰“å¼€æ–‡ä»¶ userinfo.txt
+    USERINFO newUser; // ´´½¨ĞÂÓÃ»§
+    FILE *fp = NULL; // ´ò¿ªÎÄ¼ş userinfo.txt
     fp = fopen("userinfo.txt", "a+");
 
-    printf("\n\n\n\t\t\t   æ–°ç”¨æˆ·æ³¨å†Œ | å›¾ä¹¦é¦†\n\n");
+    printf("\n\n\n\t\t\t   ĞÂÓÃ»§×¢²á | Í¼Êé¹İ\n\n");
     printf("\n\t\t");
     for( i = 0; i < WIDTH; i++ )
         printf("%c", borderChar);
@@ -251,12 +261,12 @@ void UserRegister()
     for( i = 0; i < WIDTH-2; i++ )
         printf(" ");
     printf("%c\n\t\t%c", BorderLeft, BorderLeft);
-    printf("\tç”¨æˆ·å ï¼š");
+    printf("\tÓÃ»§Ãû £º");
     gets(newUser.username);
-    // éªŒè¯ç”¨æˆ·åæ˜¯å¦é‡å¤
+    // ÑéÖ¤ÓÃ»§ÃûÊÇ·ñÖØ¸´
     while(usernameFlag == 0)
     {
-        usernameFlag = 1; // åˆå§‹åŒ–flag
+        usernameFlag = 1; // ³õÊ¼»¯flag
         for(i = 0; i < UserNum; i++)
         {
             if(strcmp(USER[i].username, newUser.username) == 0)
@@ -264,10 +274,10 @@ void UserRegister()
                 usernameFlag = 0;
             }
         }
-        if(usernameFlag == 0)   // è¡¨ç¤ºç”¨æˆ·åé‡å¤
+        if(usernameFlag == 0)   // ±íÊ¾ÓÃ»§ÃûÖØ¸´
         {
-            printf("\t\t%c\tç”¨æˆ·åé‡å¤ï¼Œè¯·é‡æ–°è¾“å…¥ï¼š\n");
-            printf("\t\t%c\tç”¨æˆ·å ï¼š", BorderLeft);
+            printf("\t\t%c\tÓÃ»§ÃûÖØ¸´£¬ÇëÖØĞÂÊäÈë£º\n");
+            printf("\t\t%c\tÓÃ»§Ãû £º", BorderLeft);
             gets(newUser.username);
         }
         else
@@ -275,26 +285,26 @@ void UserRegister()
             break;
         }
     }
-    printf("\t\t%c\tå¯†ç  ï¼š", BorderLeft);
+    printf("\t\t%c\tÃÜÂë £º", BorderLeft);
     gets(Password);
-    printf("\t\t%c\té‡å¤å¯†ç  ï¼š", BorderLeft);
+    printf("\t\t%c\tÖØ¸´ÃÜÂë £º", BorderLeft);
     gets(rePassword);
-    // éªŒè¯å¯†ç æ˜¯å¦ä¸€è‡´
+    // ÑéÖ¤ÃÜÂëÊÇ·ñÒ»ÖÂ
     while(strcmp(Password, rePassword) != 0)
     {
-        printf("\t\t%c\tå¯†ç ä¸ä¸€è‡´ï¼Œè¯·é‡æ–°è¾“å…¥ï¼š\n");
-        printf("\t\t%c\tå¯†ç  ï¼š", BorderLeft);
+        printf("\t\t%c\tÃÜÂë²»Ò»ÖÂ£¬ÇëÖØĞÂÊäÈë£º\n");
+        printf("\t\t%c\tÃÜÂë £º", BorderLeft);
         gets(Password);
-        printf("\t\t%c\té‡å¤å¯†ç  ï¼š", BorderLeft);
+        printf("\t\t%c\tÖØ¸´ÃÜÂë £º", BorderLeft);
         gets(rePassword);
     }
-    // å¯†ç ä¸€è‡´
+    // ÃÜÂëÒ»ÖÂ
     strcpy(newUser.password, Password);
-    printf("\t\t%c\tå¹´é¾„ ï¼š", BorderLeft);
+    printf("\t\t%c\tÄêÁä £º", BorderLeft);
     gets(newUser.age);
-    printf("\t\t%c\tæ€§åˆ«(male or female) ï¼š", BorderLeft);
+    printf("\t\t%c\tĞÔ±ğ(male or female) £º", BorderLeft);
     gets(newUser.sex);
-    printf("\t\t%c\tè”ç³»æ–¹å¼ ï¼š", BorderLeft);
+    printf("\t\t%c\tÁªÏµ·½Ê½ £º", BorderLeft);
     gets(newUser.contact);
 
 
@@ -302,7 +312,7 @@ void UserRegister()
     for( i = 0; i < WIDTH-2; i++ )
         printf(" ");
     printf("%c\n\t\t%c", BorderLeft, BorderLeft);
-    printf("\tæ³¨å†ŒæˆåŠŸï¼æŒ‰ESCé”®è¿”å›ï¼› \t|\n");
+    printf("\t×¢²á³É¹¦£¡°´ESC¼ü·µ»Ø£» \t|\n");
     printf("\t\t%c", BorderLeft);
     for( i = 0; i < WIDTH-2; i++ )
         printf(" ");
@@ -311,7 +321,7 @@ void UserRegister()
         printf("%c", borderChar);
     printf("%c\n", BorderLeft);
 
-    newUser.status = 0; // è¡¨ç¤ºéœ€ç®¡ç†å‘˜åŒæ„åä½¿ç”¨
+    newUser.status = 0; // ±íÊ¾Ğè¹ÜÀíÔ±Í¬ÒâºóÊ¹ÓÃ
 
     fputs(newUser.username, fp);
     fputs("\n", fp);
@@ -326,7 +336,7 @@ void UserRegister()
     fputs(newUser.contact, fp);
     fputs("\n", fp);
 
-    fclose(fp); // å…³é—­æ–‡ä»¶
+    fclose(fp); // ¹Ø±ÕÎÄ¼ş
 
     if(getch() == 27)
     {
@@ -335,17 +345,59 @@ void UserRegister()
     return;
 }
 
-/// ä¸»èœå•å‡½æ•°
+/// Ö÷²Ëµ¥º¯Êı£¨Í¼Êé¹ÜÀíÏµÍ³²Ëµ¥ ºÍ Í¼Êé½èÊéÏµÍ³²Ëµ¥£©
 void MainMenu()
 {
     SystemOp("cls");
-    int chooseNumber;
+    int chooseNumber, fileFlag, fileNum;
+    char fileStr[55];
     char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
-    printf("æ¬¢è¿ä½ ï¼Œ%sï¼\n", userCookie.username);
+    printf("»¶Ó­Äã£¬%s£¡\n", userCookie.username);
 
-    if(strcmp(userCookie.username, "admin") == 0)   // ç®¡ç†å‘˜ç™»å½•çŠ¶æ€
+    // ´ÓÎÄ¼ş¶ÁÈ¡Êı¾İ£¬±£´æµ½½á¹¹ÌåÖĞ
+    FILE *fp = NULL;
+    fp = fopen("bookinfo.txt", "a+");
+    fileFlag = 0, fileNum = 0;
+    while(!feof(fp))
     {
-        printf("\n\n\n\t\t\t\tå›¾ä¹¦ä¿¡æ¯ç®¡ç†ç³»ç»Ÿ\n\n");
+        if(fgets(fileStr, 55, fp)!=NULL)
+        {
+            fileStr[strlen(fileStr)-1]='\0'; // È¥³ı×Ö·û´®Ä©Î²\n
+            switch(fileFlag)
+            {
+            case 0:
+                strcpy(BOOK[fileNum].bookNum, fileStr);
+                break;
+            case 1:
+                strcpy(BOOK[fileNum].bookName, fileStr);
+                break;
+            case 2:
+                strcpy(BOOK[fileNum].author, fileStr);
+                break;
+            case 3:
+                strcpy(BOOK[fileNum].publishingHouse, fileStr);
+                break;
+            case 4:
+                strcpy(BOOK[fileNum].publicshingTime, fileStr);
+                break;
+            case 5:
+                strcpy(BOOK[fileNum].bookPrice, fileStr);
+                break;
+            }
+        }
+        fileFlag++;
+        if(fileFlag >= 6)
+        {
+            fileFlag = 0;
+            fileNum++;
+        }
+    }
+    BookNum = fileNum;
+    fclose(fp);
+
+    if(strcmp(userCookie.username, "admin") == 0)   // ¹ÜÀíÔ±µÇÂ¼×´Ì¬
+    {
+        printf("\n\n\n\t\t\t\tÍ¼ÊéĞÅÏ¢¹ÜÀíÏµÍ³\n\n");
         printf("\n\t\t");
         for( i = 0; i < WIDTH; i++ )
             printf("%c", borderChar);
@@ -356,7 +408,7 @@ void MainMenu()
         printf("\t%c", '1');
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
-        printf("å›¾ä¹¦ä¿¡æ¯å½•å…¥ \t|\n");
+        printf("Í¼ÊéĞÅÏ¢Â¼Èë \t|\n");
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -364,7 +416,7 @@ void MainMenu()
         printf("\t%c", '2');
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
-        printf("å›¾ä¹¦ä¿¡æ¯æµè§ˆ \t|\n");
+        printf("Í¼ÊéĞÅÏ¢ä¯ÀÀ \t|\n");
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -372,7 +424,7 @@ void MainMenu()
         printf("\t%c", '3');
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
-        printf("å›¾ä¹¦ä¿¡æ¯æŸ¥è¯¢ \t|\n");
+        printf("Í¼ÊéĞÅÏ¢²éÑ¯ \t|\n");
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -380,7 +432,7 @@ void MainMenu()
         printf("\t%c", '4');
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
-        printf("å›¾ä¹¦ä¿¡æ¯åˆ é™¤ \t|\n");
+        printf("Í¼ÊéĞÅÏ¢É¾³ı \t|\n");
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -388,7 +440,7 @@ void MainMenu()
         printf("\t%c", '5');
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
-        printf("å›¾ä¹¦ä¿¡æ¯ä¿®æ”¹ \t|\n");
+        printf("Í¼ÊéĞÅÏ¢ĞŞ¸Ä \t|\n");
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -396,7 +448,7 @@ void MainMenu()
         printf("\t%s", "ESC");
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
-        printf("é€€å‡º \t\t|\n");
+        printf("ÍË³ö \t\t|\n");
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -409,12 +461,30 @@ void MainMenu()
 
         switch(chooseNumber)
         {
-            case 0: memset(&userCookie, 0, sizeof(COOKIE)); index(); break; // é€€å‡ºç³»ç»Ÿï¼Œæ¸…é™¤cookie,è¿”å›ä¸»é¡µ
+        case 0:
+            memset(&userCookie, 0, sizeof(COOKIE));
+            index();
+            break; // ÍË³öÏµÍ³£¬Çå³ıcookie,·µ»ØÖ÷Ò³
+        case 1:
+            InformationEntry();
+            break; // ĞÅÏ¢Â¼Èë
+        case 2:
+            InformationBrowsing();
+            break; // ĞÅÏ¢ä¯ÀÀ
+        case 3:
+            InformationInquiry();
+            break; // ĞÅÏ¢²éÑ¯
+        case 4:
+            InformationDelete();
+            break; // ĞÅÏ¢É¾³ı
+        case 5:
+            InformationModify();
+            break; // ĞÅÏ¢ĞŞ¸Ä
         }
     }
-    else     // å€Ÿé˜…è€…ç™»å½•çŠ¶æ€
+    else     // ½èÔÄÕßµÇÂ¼×´Ì¬
     {
-        printf("\n\n\n\t\t\t\tå›¾ä¹¦é¦†å€Ÿä¹¦ç³»ç»Ÿ\n\n");
+        printf("\n\n\n\t\t\t\tÍ¼Êé¹İ½èÊéÏµÍ³\n\n");
         printf("\n\t\t");
         for( i = 0; i < WIDTH; i++ )
             printf("%c", borderChar);
@@ -425,7 +495,7 @@ void MainMenu()
         printf("\t%c", '1');
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
-        printf("æŸ¥é˜…å›¾ä¹¦ \t\t|\n");
+        printf("²éÔÄÍ¼Êé \t\t|\n");
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -433,7 +503,7 @@ void MainMenu()
         printf("\t%c", '2');
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
-        printf("å€Ÿé˜…å›¾ä¹¦ \t\t|\n");
+        printf("½èÔÄÍ¼Êé \t\t|\n");
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -441,7 +511,7 @@ void MainMenu()
         printf("\t%c", '3');
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
-        printf("å›¾ä¹¦å€Ÿé˜…çŠ¶æ€ \t|\n");
+        printf("Í¼Êé½èÔÄ×´Ì¬ \t|\n");
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -449,7 +519,7 @@ void MainMenu()
         printf("\t%c", '4');
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
-        printf("å›¾ä¹¦å½’è¿˜ \t\t|\n");
+        printf("Í¼Êé¹é»¹ \t\t|\n");
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -457,7 +527,7 @@ void MainMenu()
         printf("\t%s", "ESC");
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
-        printf("é€€å‡º \t\t|\n");
+        printf("ÍË³ö \t\t|\n");
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
@@ -470,8 +540,163 @@ void MainMenu()
     }
 }
 
-/// é…ç½®å‡½æ•°
-char RandomNumber(char str[], int n) // è¿”å›éšæœºæ•°å‡½æ•°
+/// Í¼Êé¹ÜÀíÏµÍ³Ö÷Ä£¿é£¨Â¼Èë¡¢ä¯ÀÀ¡¢²éÑ¯¡¢É¾³ı¡¢ĞŞ¸Ä£©
+void InformationEntry() // Í¼ÊéĞÅÏ¢Â¼Èëº¯Êı
+{
+    SystemOp("cls");
+    fflush(stdin);
+    int chooseNumber;
+    char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
+
+    BOOKINFO NewBook; // ´´½¨ĞÂµÄÍ¼ÊéĞÅÏ¢
+    FILE *fp = NULL; // ´ò¿ªÎÄ¼ş bookinfo.txt
+    fp = fopen("bookinfo.txt", "a+");
+
+    printf("\n\t\t");
+    for( i = 0; i < WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c\t\tÍ¼ÊéĞÅÏ¢Â¼Èë \t\t%c\n", BorderLeft, BorderLeft, BorderLeft);
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf("%c", borderChar);
+
+    printf("%c\n\t\t%c\tÇëÊäÈëÄúµÄÊé¼®µÄÊéºÅ£º", BorderLeft, BorderLeft);
+    gets(NewBook.bookNum);
+    printf("\t\t%c\tÇëÊäÈëÊéÃû£º", BorderLeft);
+    gets(NewBook.bookName);
+    printf("\t\t%c\tÇëÊäÈë×÷ÕßÃû£º", BorderLeft);
+    gets(NewBook.author);
+    printf("\t\t%c\tÇëÊäÈë³ö°æÉç£º", BorderLeft);
+    gets(NewBook.publishingHouse);
+    printf("\t\t%c\tÇëÊäÈë³ö°æÊ±¼ä£º", BorderLeft);
+    gets(NewBook.publicshingTime);
+    printf("\t\t%c\tÇëÊäÈë¸ÃÊéµÄ¼Û¸ñ£º", BorderLeft);
+    gets(NewBook.bookPrice);
+    printf("\t\t%c", BorderLeft, BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf("%c", borderChar);
+    printf("%c\n", BorderLeft);
+
+    // Í¼ÊéĞÅÏ¢Â¼ÈëÎÄ¼ş
+    fputs(NewBook.bookNum, fp);
+    fputs("\n", fp);
+    fputs(NewBook.bookName, fp);
+    fputs("\n", fp);
+    fputs(NewBook.author, fp);
+    fputs("\n", fp);
+    fputs(NewBook.publishingHouse, fp);
+    fputs("\n", fp);
+    fputs(NewBook.publicshingTime, fp);
+    fputs("\n", fp);
+    fputs(NewBook.bookPrice, fp);
+    fputs("\n", fp);
+
+    fclose(fp); // ¹Ø±ÕÎÄ¼ş
+
+    printf("\t\t¡¶%s¡·ĞÅÏ¢Â¼ÈëÍê³É£¬ÊÇ·ñ¼ÌĞøÂ¼Èë?(0 ÍË³ö| 1 ¼ÌĞø)", NewBook.bookName);
+
+    chooseNumber = ChooseVerify(0, 1);
+    switch(chooseNumber)
+    {
+    case 0:
+        MainMenu();
+        break; // ÍË³ö
+    case 1:
+        InformationEntry();
+        break; // ¼ÌĞø
+    }
+    return;
+}
+
+void InformationBrowsing() // Í¼ÊéĞÅÏ¢ä¯ÀÀº¯Êı
+{
+    SystemOp("cls");
+    char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
+
+    printf("\n\t\t");
+    for( i = 0; i < WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c\t  ***Í¼ÊéĞÅÏ¢ä¯ÀÀ*** \t\t%c\n", BorderLeft, BorderLeft, BorderLeft);
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf("%c", borderChar);
+    printf("%c\n", BorderLeft);
+
+    // Êä³öËùÓĞµÄÍ¼ÊéĞÅÏ¢
+    for(j = 0; j < BookNum; j++)
+    {
+        printf("\n\t\t");
+        for( i = 0; i < WIDTH; i++ )
+            printf("%c", borderChar);
+        printf("\n\t\t%cid:%03d%c", BorderLeft, j+1, BorderLeft);
+        for( i = 0; i < WIDTH-9; i++ )
+            printf(" ");
+        printf("%c\n\t\t%c\tÊéºÅ£º%s \t\t%c\n", BorderLeft, BorderLeft, BOOK[j].bookNum, BorderLeft);
+        printf("\t\t%c\tÊéÃû£º%s \t\t%c\n", BorderLeft, BOOK[j].bookName, BorderLeft);
+        printf("\t\t%c\t×÷Õß£º%s \t\t%c\n", BorderLeft, BOOK[j].author, BorderLeft);
+        printf("\t\t%c\t³ö°æÉç£º%s \t\t%c\n", BorderLeft, BOOK[j].publishingHouse, BorderLeft);
+        printf("\t\t%c\t³ö°æÊ±¼ä£º%s \t\t%c\n", BorderLeft, BOOK[j].publicshingTime, BorderLeft);
+        printf("\t\t%c\t¼Û¸ñ£º%s \t\t\t%c\n",BorderLeft, BOOK[j].bookPrice, BorderLeft);
+        printf("\t\t%c", BorderLeft);
+        for( i = 0; i < WIDTH-2; i++ )
+            printf(" ");
+        printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+        for( i = 0; i < WIDTH-2; i++ )
+            printf("%c", borderChar);
+        printf("%c\n", BorderLeft);
+    }
+    printf("\t\t°´ESC¼ü·µ»Ø£º");
+    int chooseNumber = ChooseVerify(0, 0);
+    if(chooseNumber == 0) {
+        MainMenu(); // ·µ»ØÖ÷²Ëµ¥º¯Êı
+    }
+}
+
+void InformationInquiry() // Í¼ÊéĞÅÏ¢²éÑ¯º¯Êı
+{
+    SystemOp("cls");
+    char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
+
+    printf("\n\t\t");
+    for( i = 0; i < WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c\t  ***Í¼ÊéĞÅÏ¢²éÑ¯*** \t\t%c\n", BorderLeft, BorderLeft, BorderLeft);
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf("%c", borderChar);
+    printf("%c\n", BorderLeft);
+}
+
+void InformationDelete() // Í¼ÊéĞÅÏ¢É¾³ıº¯Êı
+{
+
+}
+
+void InformationModify() // Í¼ÊéĞÅÏ¢ĞŞ¸Äº¯Êı
+{
+
+}
+
+/// ÅäÖÃº¯ÊıÄ£¿é
+char RandomNumber(char str[], int n) // ·µ»ØËæ»úÊıº¯Êı
 {
     int randomChar;
 
@@ -481,7 +706,7 @@ char RandomNumber(char str[], int n) // è¿”å›éšæœºæ•°å‡½æ•°
     return randomChar;
 }
 
-int ChooseVerify(int minNumber, int maxNumber) // é€‰æ‹©éªŒè¯å‡½æ•°
+int ChooseVerify(int minNumber, int maxNumber) // Ñ¡ÔñÑéÖ¤º¯Êı£¨!£©
 {
     int chooseNumber;
     char inputChar;
@@ -491,6 +716,12 @@ int ChooseVerify(int minNumber, int maxNumber) // é€‰æ‹©éªŒè¯å‡½æ•°
     if(inputChar == 27)
     {
         return 0;
+    }
+    else if(inputChar == 9)
+    {
+        BackgroundColor();
+        printf("(±³¾°É«ÇĞ»»³É¹¦\1)");
+        return ChooseVerify(minNumber, maxNumber);
     }
     else
     {
@@ -508,17 +739,17 @@ int ChooseVerify(int minNumber, int maxNumber) // é€‰æ‹©éªŒè¯å‡½æ•°
     return chooseNumber;
 }
 
-void loginVerify(char username[]) // ç™»å½•éªŒè¯å‡½æ•°
+void loginVerify(char username[]) // µÇÂ¼ÑéÖ¤º¯Êı
 {
     int status;
     char password[55];
 
-    printf("\t\t\tè¯·è¾“å…¥å¯†ç  :  ", BorderLeft);
+    printf("\t\t\tÇëÊäÈëÃÜÂë :  ", BorderLeft);
     char tempPassword[20]= {};
     tempPassword[0]=getch();
     if (tempPassword[0]==27)
     {
-        // ESC é”®è¿”å›ä¸»é¡µï¼Œreturn
+        // ESC ¼ü·µ»ØÖ÷Ò³£¬return
         index();
         return;
     }
@@ -531,45 +762,45 @@ void loginVerify(char username[]) // ç™»å½•éªŒè¯å‡½æ•°
     strcat(tempPassword, password);
     strcpy(password, tempPassword);
 
-    if(strcmp(username, "admin") == 0)   // ç®¡ç†å‘˜ç™»å½•
+    if(strcmp(username, "admin") == 0)   // ¹ÜÀíÔ±µÇÂ¼
     {
         if(strcmp(password, "admin") == 0)
         {
             status = 200;
 
-            // åˆ›å»ºcookie
+            // ´´½¨cookie
             strcpy(userCookie.username, "admin");
         }
         else
         {
             status = 400;
 
-            printf("\t\t \tå¯†ç é”™è¯¯ï¼Œç™»å½•å¤±è´¥ã€‚è¯·é‡è¯•\n");
+            printf("\t\t \tÃÜÂë´íÎó£¬µÇÂ¼Ê§°Ü¡£ÇëÖØÊÔ\n");
             loginVerify(username);
         }
     }
-    else     // å€Ÿé˜…è€…ç™»å½•
+    else     // ½èÔÄÕßµÇÂ¼
     {
         for(i = 0; i < UserNum; i++)
         {
             if(strcmp(username, USER[i].username) == 0)
             {
-                if(strcmp(password, USER[i].password) == 0)   // å¯†ç æ­£ç¡®
+                if(strcmp(password, USER[i].password) == 0)   // ÃÜÂëÕıÈ·
                 {
-                    if(USER[i].status == 0)   // æœªç»ç®¡ç†å‘˜é€šè¿‡
+                    if(USER[i].status == 0)   // Î´¾­¹ÜÀíÔ±Í¨¹ı
                     {
-                        status = 403; // æƒé™ä¸å¤Ÿç¦æ­¢è®¿é—®
-                        printf("\t\t \tè¯·ç­‰å¾…ç®¡ç†å‘˜åŒæ„ç”¨æˆ·æ³¨å†Œ!\n");
+                        status = 403; // È¨ÏŞ²»¹»½ûÖ¹·ÃÎÊ
+                        printf("\t\t \tÇëµÈ´ı¹ÜÀíÔ±Í¬ÒâÓÃ»§×¢²á!\n");
                         loginVerify(username);
                         return;
                     }
                     else
                     {
-                        status = 200; // æ²¡æœ‰é—®é¢˜
+                        status = 200; // Ã»ÓĞÎÊÌâ
 
-                        // åˆ›å»ºcookie
+                        // ´´½¨cookie
                         strcpy(userCookie.username, username);
-                        // å½•å…¥ä¿¡æ¯
+                        // Â¼ÈëĞÅÏ¢
                         strcpy(CurrentUser.username, USER[i].username);
                         strcpy(CurrentUser.password, USER[i].password);
                         strcpy(CurrentUser.age, USER[i].age);
@@ -582,9 +813,9 @@ void loginVerify(char username[]) // ç™»å½•éªŒè¯å‡½æ•°
                 }
                 else
                 {
-                    status = 400; // å¯†ç é”™è¯¯
+                    status = 400; // ÃÜÂë´íÎó
 
-                    printf("\t\t \tå¯†ç é”™è¯¯ï¼Œç™»å½•å¤±è´¥ã€‚è¯·é‡è¯•\n");
+                    printf("\t\t \tÃÜÂë´íÎó£¬µÇÂ¼Ê§°Ü¡£ÇëÖØÊÔ\n");
                     loginVerify(username);
                     return;
                 }
@@ -592,16 +823,15 @@ void loginVerify(char username[]) // ç™»å½•éªŒè¯å‡½æ•°
         }
         if(status != 200 || status != 400)
         {
-            status = 404; // æ‰¾ä¸åˆ°
-            printf("\t\t \tç”¨æˆ·ä¸å­˜åœ¨ï¼Œç™»å½•å¤±è´¥ã€‚è¯·æŒ‰ESCé”®è¿”å›æ³¨å†Œ\n");
+            status = 404; // ÕÒ²»µ½
+            printf("\t\t \tÓÃ»§²»´æÔÚ£¬µÇÂ¼Ê§°Ü¡£Çë°´ESC¼ü·µ»Ø×¢²á\n");
             loginVerify(username);
             return;
         }
     }
-    return;
 }
 
-void BackgroundColor() // èƒŒæ™¯è‰²å‡½æ•°
+void BackgroundColor() // ±³¾°É«º¯Êı
 {
     char COLOR[20] = {};
     char randomColor;
@@ -622,7 +852,7 @@ void BackgroundColor() // èƒŒæ™¯è‰²å‡½æ•°
     SystemOp(colorString);
 }
 
-void SystemOp(char str[]) // æ§åˆ¶å°æ“ä½œå‡½æ•°
+void SystemOp(char str[]) // ¿ØÖÆÌ¨²Ù×÷º¯Êı
 {
     system(str);
 }
