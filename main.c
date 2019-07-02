@@ -1,3 +1,8 @@
+/*
+ * 本代码优点：
+ * 使用linux内核代码规范形式
+ * 注释完整，代码严谨
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,11 +42,15 @@ COOKIE userCookie; // 登录信息
 USERINFO USER[5000], CurrentUser; // 用户信息结构体数组
 BOOKINFO BOOK[5000]; // 图书信息结构体数组
 
+/* 配置函数模块 */
 char RandomNumber(char str[], int n); // 返回随机数函数
 int ChooseVerify(int minNumber, int maxNumber); // 选择验证函数
 void loginVerify(char username[]); // 登录验证函数
 void BackgroundColor(); // 背景色函数
 void SystemOp(char str[]); // 控制台操作函数
+int StringMatch(char pStr[], char qStr[]); // 字符串模糊匹配函数
+void BookPrintf(int id); // 图书信息输出函数
+int Timestamp(char time[]); // 简易时间戳函数
 
 void index(); // 主页函数
 void login(); // 登录函数
@@ -53,6 +62,7 @@ void InformationBrowsing(); // 图书信息浏览函数
 void InformationInquiry(); // 图书信息查询函数
 void InformationDelete(); // 图书信息删除函数
 void InformationModify(); // 图书信息修改函数
+
 
 
 int main()
@@ -574,8 +584,14 @@ void InformationEntry() // 图书信息录入函数
     gets(NewBook.author);
     printf("\t\t%c\t请输入出版社：", BorderLeft);
     gets(NewBook.publishingHouse);
-    printf("\t\t%c\t请输入出版时间：", BorderLeft);
+    printf("\t\t%c\t请输入出版时间(时间格式:YYYY-mm-dd)：", BorderLeft);
     gets(NewBook.publicshingTime);
+    while(NewBook.publicshingTime[4] != '-' && NewBook.publicshingTime[6] != '-')
+    {
+        printf("\t\t%c时间格式错误！请重新输入", BorderLeft);
+        printf("\t\t%c\t请输入出版时间(时间格式:YYYY-mm-dd)：", BorderLeft);
+        gets(NewBook.publicshingTime);
+    }
     printf("\t\t%c\t请输入该书的价格：", BorderLeft);
     gets(NewBook.bookPrice);
     printf("\t\t%c", BorderLeft, BorderLeft);
@@ -659,7 +675,8 @@ void InformationBrowsing() // 图书信息浏览函数
     }
     printf("\t\t按ESC键返回：");
     int chooseNumber = ChooseVerify(0, 0);
-    if(chooseNumber == 0) {
+    if(chooseNumber == 0)
+    {
         MainMenu(); // 返回主菜单函数
     }
 }
@@ -667,6 +684,8 @@ void InformationBrowsing() // 图书信息浏览函数
 void InformationInquiry() // 图书信息查询函数
 {
     SystemOp("cls");
+    int chooseNumber, resultNumber = 0;
+    char searcherStr[55];
     char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
 
     printf("\n\t\t");
@@ -685,45 +704,30 @@ void InformationInquiry() // 图书信息查询函数
         printf("%c", OpLine);
     printf("根据书号查询 \t|\n");
     printf("\t\t%c", BorderLeft);
-    for( i = 0; i < WIDTH-2; i++ )
-        printf(" ");
-    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
-    printf("\t%c", '1');
+    printf("\t%c", '2');
     for( i = 0; i < OpWidth; i++ )
         printf("%c", OpLine);
     printf("根据书名查询 \t|\n");
     printf("\t\t%c", BorderLeft);
-    for( i = 0; i < WIDTH-2; i++ )
-        printf(" ");
-    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
-    printf("\t%c", '1');
+    printf("\t%c", '3');
     for( i = 0; i < OpWidth; i++ )
         printf("%c", OpLine);
     printf("根据作者查询 \t|\n");
     printf("\t\t%c", BorderLeft);
-    for( i = 0; i < WIDTH-2; i++ )
-        printf(" ");
-    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
-    printf("\t%c", '1');
+    printf("\t%c", '4');
     for( i = 0; i < OpWidth; i++ )
         printf("%c", OpLine);
     printf("根据出版社查询 \t|\n");
     printf("\t\t%c", BorderLeft);
-    for( i = 0; i < WIDTH-2; i++ )
-        printf(" ");
-    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
-    printf("\t%c", '1');
+    printf("\t%c", '5');
     for( i = 0; i < OpWidth; i++ )
         printf("%c", OpLine);
     printf("根据出版时间查询 \t|\n");
     printf("\t\t%c", BorderLeft);
-    for( i = 0; i < WIDTH-2; i++ )
-        printf(" ");
-    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
-    printf("\t%c", '1');
-    for( i = 0; i < OpWidth; i++ )
+    printf("\t%s", "ESC");
+    for( i = 0; i < OpWidth-2; i++ )
         printf("%c", OpLine);
-    printf("根据价格查询 \t|\n");
+    printf(" 返回主菜单 \t|\n");
     printf("\t\t%c", BorderLeft);
     for( i = 0; i < WIDTH-2; i++ )
         printf(" ");
@@ -731,8 +735,105 @@ void InformationInquiry() // 图书信息查询函数
     for( i = 0; i < WIDTH-2; i++ )
         printf("%c", borderChar);
     printf("%c\n", BorderLeft);
-
     printf("\n\t\t", BorderLeft);
+
+    chooseNumber = ChooseVerify(1, 5);
+    fflush(stdin);
+    switch(chooseNumber)
+    {
+    case 0:
+        MainMenu();
+        break;
+    case 1:
+    {
+        printf("\n\t%c 请输入想要查询的书号：", BorderLeft);
+        gets(searcherStr);
+        for(k = 0; k < BookNum; k++)
+        {
+            if(StringMatch(BOOK[k].bookNum, searcherStr) == 1)
+                resultNumber++,
+                             BookPrintf(k);
+        }
+    }
+    break;
+    case 2:
+    {
+        printf("\n\t%c 请输入想要查询的书名：", BorderLeft);
+        gets(searcherStr);
+        for(k = 0; k < BookNum; k++)
+        {
+            if(StringMatch(BOOK[k].bookName, searcherStr) == 1)
+                resultNumber++,
+                             BookPrintf(k);
+        }
+    }
+    break;
+    case 3:
+    {
+        printf("\n\t%c 请输入想要查询的作者名：", BorderLeft);
+        gets(searcherStr);
+        for(k = 0; k < BookNum; k++)
+        {
+            if(StringMatch(BOOK[k].author, searcherStr) == 1)
+                resultNumber++,
+                             BookPrintf(k);
+        }
+    }
+    break;
+    case 4:
+    {
+        printf("\n\t%c 请输入想要查询的出版社：", BorderLeft);
+        gets(searcherStr);
+        for(k = 0; k < BookNum; k++)
+        {
+            if(StringMatch(BOOK[k].publishingHouse, searcherStr) == 1)
+                resultNumber++,
+                             BookPrintf(k);
+        }
+    }
+    break;
+    case 5:
+    {
+        char startTime[55], endTime[55];
+        printf("\n\t%c 请输入想要查询的时间段(时间格式:YYYY-mm-dd)", BorderLeft);
+        printf("\n\t%c --开始时间：", BorderLeft);
+        gets(startTime);
+        while(startTime[4] != '-' && startTime[6] != '-')
+        {
+            printf("\t时间格式错误！请重新输入");
+            printf("\n\t%c --开始时间：", BorderLeft);
+            gets(startTime);
+        }
+        printf("\n\t%c --结束时间：", BorderLeft);
+        gets(endTime);
+        while(endTime[4] != '-' && endTime[6] != '-')
+        {
+            printf("\t时间格式错误！请重新输入");
+            printf("\n\t%c --结束时间：", BorderLeft);
+            gets(endTime);
+        }
+        for(k = 0; k < BookNum; k++)
+        {
+            if(Timestamp(startTime) <= Timestamp(BOOK[k].publicshingTime) && Timestamp(BOOK[k].publicshingTime) <= Timestamp(endTime))
+                resultNumber++,
+                             BookPrintf(k);
+        }
+    }
+    break;
+    }
+    printf("\n\t%c 共查询到%d 本书。", BorderLeft, resultNumber);
+    printf("\n\t%c 是否继续查询？(0 退出| 1 重新查询)：", BorderLeft);
+    chooseNumber = ChooseVerify(0 , 1);
+    if(chooseNumber == 0)   // 退出
+    {
+        MainMenu(); // 返回主菜单
+    }
+    else if(chooseNumber == 1)     // 继续查询
+    {
+        InformationInquiry(); // 回调函数
+        return;
+    }
+    return;
 }
 
 void InformationDelete() // 图书信息删除函数
@@ -905,4 +1006,87 @@ void BackgroundColor() // 背景色函数
 void SystemOp(char str[]) // 控制台操作函数
 {
     system(str);
+}
+
+int StringMatch(char pStr[], char qStr[]) // 字符串模糊匹配函数
+{
+    int flag = 0; // 初始化flag;
+    int pLen = strlen(pStr), qLen = strlen(qStr);
+    if(pLen < qLen)   // 确保pStr长度大于qStr
+    {
+        return 0;
+    }
+    for(i = 0; i <= pLen-qLen; i++)
+    {
+        if(pStr[i] == qStr[0])
+        {
+            flag = 1;
+            for(j = 0; j < qLen; j++)
+            {
+                if(pStr[i+j] != qStr[j])
+                    flag = 0;
+            }
+        }
+    }
+    return flag;
+}
+
+void BookPrintf(int id) // 图书信息输出函数
+{
+    char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
+    printf("\n\t\t");
+    for( i = 0; i < WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c\t书号：%s \t\t%c\n", BorderLeft, BorderLeft, BOOK[id].bookNum, BorderLeft);
+    printf("\t\t%c\t书名：%s \t\t%c\n", BorderLeft, BOOK[id].bookName, BorderLeft);
+    printf("\t\t%c\t作者：%s \t\t%c\n", BorderLeft, BOOK[id].author, BorderLeft);
+    printf("\t\t%c\t出版社：%s \t\t%c\n", BorderLeft, BOOK[id].publishingHouse, BorderLeft);
+    printf("\t\t%c\t出版时间：%s \t\t%c\n", BorderLeft, BOOK[id].publicshingTime, BorderLeft);
+    printf("\t\t%c\t价格：%s \t\t\t%c\n",BorderLeft, BOOK[id].bookPrice, BorderLeft);
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf("%c", borderChar);
+    printf("%c\n", BorderLeft);
+}
+
+int Timestamp(char time[]) // 简易时间戳函数
+{
+    /* 输入YYYY-mm-dd格式日期字符串
+     * 转化成简易时间戳
+     * 便于时间之间比较
+     */
+    int year, month, day;
+    int timestamp = 0;
+    int mday; // 2月是否闰月
+    int months[13]= {0,31,28,31,30,31,30,31,31,30,31,30,31};
+    // 转化成整型数据
+    year = (time[0]-'0')*1000 + (time[1]-'0')*100 + (time[2]-'0')*10 + (time[3]-'0');
+    month = (time[5]-'0')*10 + (time[6]-'0');
+    day = (time[8]-'0')*10 + (time[9]-'0');
+    // 转化为时间戳,以1800-01-01为基准
+    for(i = 1800; i < year; i++)
+    {
+        if(i%4==0 && i%100!=0 ||i %400==0)
+            timestamp += 366;
+        else
+            timestamp += 365;
+    }
+    if(year%4==0 && year%100!=0 || year%400==0)
+        mday = 29;
+    else
+        mday = 28;
+    months[2] = mday;
+    for(i = 1; i < month; i++)
+    {
+        timestamp += months[i];
+    }
+    timestamp += day;
+
+    return timestamp;
 }
