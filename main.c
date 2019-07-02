@@ -680,9 +680,59 @@ void InformationInquiry() // 图书信息查询函数
     for( i = 0; i < WIDTH-2; i++ )
         printf(" ");
     printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    printf("\t%c", '1');
+    for( i = 0; i < OpWidth; i++ )
+        printf("%c", OpLine);
+    printf("根据书号查询 \t|\n");
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    printf("\t%c", '1');
+    for( i = 0; i < OpWidth; i++ )
+        printf("%c", OpLine);
+    printf("根据书名查询 \t|\n");
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    printf("\t%c", '1');
+    for( i = 0; i < OpWidth; i++ )
+        printf("%c", OpLine);
+    printf("根据作者查询 \t|\n");
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    printf("\t%c", '1');
+    for( i = 0; i < OpWidth; i++ )
+        printf("%c", OpLine);
+    printf("根据出版社查询 \t|\n");
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    printf("\t%c", '1');
+    for( i = 0; i < OpWidth; i++ )
+        printf("%c", OpLine);
+    printf("根据出版时间查询 \t|\n");
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    printf("\t%c", '1');
+    for( i = 0; i < OpWidth; i++ )
+        printf("%c", OpLine);
+    printf("根据价格查询 \t|\n");
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
     for( i = 0; i < WIDTH-2; i++ )
         printf("%c", borderChar);
     printf("%c\n", BorderLeft);
+
+    printf("\n\t\t", BorderLeft);
 }
 
 void InformationDelete() // 图书信息删除函数
