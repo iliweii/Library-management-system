@@ -29,6 +29,11 @@ struct bookinfo // 保存所有图书信息
     char publishingHouse[55], publicshingTime[55]; // 出版社，出版时间
     char bookPrice[55]; // 该书的价格
 };
+struct booklend // 保存所有借书信息
+{
+    char userName[55];
+    char bookNum[55];
+};
 int WIDTH = 41; // 用户界面宽度
 int OpWidth = 12; // 用户操作宽度
 int UserNum = 0, BookNum = 0; // 用户总数, 图书总数
@@ -38,11 +43,13 @@ char OpLine = '-', BorderLeft = '|';
 typedef struct cookie COOKIE;
 typedef struct userinfo USERINFO;
 typedef struct bookinfo BOOKINFO;
+typedef struct booklend BOOKLEND:
 COOKIE userCookie; // 登录信息
 USERINFO USER[5000], CurrentUser; // 用户信息结构体数组
 BOOKINFO BOOK[5000]; // 图书信息结构体数组
+BOOKLEND LEND[5000]; // 借书信息结构体数组
 
-/* 配置函数模块 */
+/* 功能函数模块 */
 char RandomNumber(char str[], int n); // 返回随机数函数
 int ChooseVerify(int minNumber, int maxNumber); // 选择验证函数
 void loginVerify(char username[]); // 登录验证函数
@@ -56,14 +63,19 @@ void index(); // 主页函数
 void login(); // 登录函数
 void UserRegister();// 用户注册函数
 void MainMenu(); // 主菜单函数
+
 /* 图书管理系统主模块 */
 void InformationEntry(); // 图书信息录入函数
 void InformationBrowsing(); // 图书信息浏览函数
 void InformationInquiry(); // 图书信息查询函数
 void InformationDelete(); // 图书信息删除函数
 void InformationModify(); // 图书信息修改函数
+void AccountManage(); // 用户账号管理函数
 
-
+/* 图书馆借书系统主模块 */
+void BookLend(); // 借阅图书
+void BookLendStatus(); // 图书借阅状态
+void BookReturn(); // 图书归还
 
 int main()
 {
@@ -362,7 +374,7 @@ void MainMenu()
     int chooseNumber, fileFlag, fileNum;
     char fileStr[55];
     char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
-    printf("欢迎你，%s！\n", userCookie.username);
+    printf("欢迎你，%s！", userCookie.username);
 
     // 从文件读取数据，保存到结构体中
     FILE *fp = NULL;
@@ -455,6 +467,14 @@ void MainMenu()
         for( i = 0; i < WIDTH-2; i++ )
             printf(" ");
         printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+        printf("\t%c", '6');
+        for( i = 0; i < OpWidth; i++ )
+            printf("%c", OpLine);
+        printf("用户账号管理 \t|\n");
+        printf("\t\t%c", BorderLeft);
+        for( i = 0; i < WIDTH-2; i++ )
+            printf(" ");
+        printf("%c\n\t\t%c", BorderLeft, BorderLeft);
         printf("\t%s", "ESC");
         for( i = 0; i < OpWidth; i++ )
             printf("%c", OpLine);
@@ -490,6 +510,9 @@ void MainMenu()
         case 5:
             InformationModify();
             break; // 信息修改
+        case 6:
+            AccountManage();
+            break; // 用户账号管理
         }
     }
     else     // 借阅者登录状态
@@ -547,15 +570,35 @@ void MainMenu()
         printf("%c", BorderLeft);
 
         chooseNumber = ChooseVerify(1, 4);
+
+        switch(chooseNumber)
+        {
+        case 0:
+            memset(&userCookie, 0, sizeof(COOKIE));
+            index();
+            break; // 退出系统，清除cookie,返回主页
+        case 1:
+            InformationInquiry();
+            break; // 查阅图书
+        case 2:
+            BookLend();
+            break; // 借阅图书
+        case 3:
+            BookLandStatus();
+            break; // 图书借阅状态
+        case 4:
+            BookReturn();
+            break; // 图书归还
+        }
     }
 }
 
-/// 图书管理系统主模块（录入、浏览、查询、删除、修改）
+/// 图书管理系统主模块（录入、浏览、查询、删除、修改，账户管理）
 void InformationEntry() // 图书信息录入函数
 {
     SystemOp("cls");
     fflush(stdin);
-    int chooseNumber;
+    int chooseNumber, bookNumFlag;
     char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
 
     BOOKINFO NewBook; // 创建新的图书信息
@@ -577,7 +620,24 @@ void InformationEntry() // 图书信息录入函数
         printf("%c", borderChar);
 
     printf("%c\n\t\t%c\t请输入您的书籍的书号：", BorderLeft, BorderLeft);
+    bookNumFlag = 0;
     gets(NewBook.bookNum);
+    while(bookNumFlag == 0)
+    {
+        bookNumFlag = 1;
+        for(i = 0; i < BookNum; i++)
+        {
+            if( strcmp(BOOK[i].bookNum, NewBook.bookNum) == 1 )
+            {
+                bookNumFlag = 0;
+                break;
+            }
+        }
+        printf("\t\t%c  该书号已存在，请重新输入!", BorderLeft, BorderLeft);
+        printf("%c\n\t\t%c\t请输入您的书籍的书号：", BorderLeft, BorderLeft);
+        gets(NewBook.bookNum);
+    }
+
     printf("\t\t%c\t请输入书名：", BorderLeft);
     gets(NewBook.bookName);
     printf("\t\t%c\t请输入作者名：", BorderLeft);
@@ -823,7 +883,7 @@ void InformationInquiry() // 图书信息查询函数
     }
     printf("\n\t%c 共查询到%d 本书。", BorderLeft, resultNumber);
     printf("\n\t%c 是否继续查询？(0 退出| 1 重新查询)：", BorderLeft);
-    chooseNumber = ChooseVerify(0 , 1);
+    chooseNumber = ChooseVerify(0, 1);
     if(chooseNumber == 0)   // 退出
     {
         MainMenu(); // 返回主菜单
@@ -838,15 +898,531 @@ void InformationInquiry() // 图书信息查询函数
 
 void InformationDelete() // 图书信息删除函数
 {
+    SystemOp("cls");
+    int chooseNumber, resultNumber = 0, bookDeleteNum;
+    char searcherStr[55];
+    char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
+    BOOKINFO tempbook;
 
+    printf("\n\t\t");
+    for( i = 0; i < WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c\t  ***图书信息删除*** \t\t%c\n", BorderLeft, BorderLeft, BorderLeft);
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    printf("\t%c", '1');
+    for( i = 0; i < OpWidth; i++ )
+        printf("%c", OpLine);
+    printf("根据书号查询图书 \t|\n");
+    printf("\t\t%c", BorderLeft);
+    printf("\t%s", "ESC");
+    for( i = 0; i < OpWidth-2; i++ )
+        printf("%c", OpLine);
+    printf(" 返回主菜单 \t|\n");
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t|(请精确查找，查找结果为一本书时允许删除|\n\t\t%c", BorderLeft, BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf("%c", borderChar);
+    printf("%c\n", BorderLeft);
+    printf("\n\t\t", BorderLeft);
+
+    chooseNumber = ChooseVerify(1, 1);
+    fflush(stdin);
+    switch(chooseNumber)
+    {
+    case 0:
+        MainMenu();
+        break;
+    case 1:
+    {
+        printf("\n\t%c 请输入想要查询的书号：", BorderLeft);
+        gets(searcherStr);
+        for(k = 0; k < BookNum; k++)
+        {
+            if(StringMatch(BOOK[k].bookNum, searcherStr) == 1)
+            {
+                bookDeleteNum = k;
+                resultNumber++;
+                BookPrintf(k);
+            }
+        }
+    }
+    break;
+    }
+    printf("\n\t%c 共查询到%d 本书。", BorderLeft, resultNumber);
+    printf("\n\t%c |(请精确查找，查找结果为一本书时允许删除)", BorderLeft);
+    if(resultNumber == 1)
+    {
+        printf("\n\t%c 是否删除《%s》？(0 取消| 1 确认)：", BorderLeft, BOOK[bookDeleteNum].bookName);
+        chooseNumber = ChooseVerify(0, 1);
+        if(chooseNumber == 0)   // 取消
+        {
+            InformationDelete(); // 返回信息删除函数
+            return;
+        }
+        else if(chooseNumber == 1)     // 删除
+        {
+            tempbook = BOOK[BookNum-1];
+            BOOK[BookNum-1] = BOOK[bookDeleteNum];
+            BOOK[bookDeleteNum] = tempbook;
+            BookNum--;
+            // 重新写入文件
+            FILE *fp = NULL; // 打开文件 bookinfo.txt
+            fp = fopen("bookinfo.txt", "w+");
+            for(i = 0; i < BookNum; i++)
+            {
+                fputs(BOOK[i].bookNum, fp);
+                fputs("\n", fp);
+                fputs(BOOK[i].bookName, fp);
+                fputs("\n", fp);
+                fputs(BOOK[i].author, fp);
+                fputs("\n", fp);
+                fputs(BOOK[i].publishingHouse, fp);
+                fputs("\n", fp);
+                fputs(BOOK[i].publicshingTime, fp);
+                fputs("\n", fp);
+                fputs(BOOK[i].bookPrice, fp);
+                fputs("\n", fp);
+            }
+            fclose(fp); // 关闭文件
+        }
+        printf("\n\t%c 删除成功！", BorderLeft);
+        printf("\n\t\t");
+        for( i = 0; i < WIDTH; i++ )
+            printf("%c", borderChar);
+        printf("\n");
+    }
+    printf("\n\t%c 是否继续？(0 退出| 1 重新查询)：", BorderLeft);
+    chooseNumber = ChooseVerify(0, 1);
+    if(chooseNumber == 0)   // 退出
+    {
+        MainMenu(); // 返回主菜单
+    }
+    else if(chooseNumber == 1)     // 继续查询
+    {
+        InformationDelete(); // 回调函数
+        return;
+    }
+
+    return;
 }
 
 void InformationModify() // 图书信息修改函数
 {
+    SystemOp("cls");
+    int chooseNumber, resultNumber = 0, bookModifyNum;
+    char searcherStr[55];
+    char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
+
+    printf("\n\t\t");
+    for( i = 0; i < WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c\t  ***图书信息修改*** \t\t%c\n", BorderLeft, BorderLeft, BorderLeft);
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    printf("\t%c", '1');
+    for( i = 0; i < OpWidth; i++ )
+        printf("%c", OpLine);
+    printf("根据书号查询图书 \t|\n");
+    printf("\t\t%c", BorderLeft);
+    printf("\t%s", "ESC");
+    for( i = 0; i < OpWidth-2; i++ )
+        printf("%c", OpLine);
+    printf(" 返回主菜单 \t|\n");
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t|(请精确查找，查找结果为一本书时修改信息|\n\t\t%c", BorderLeft, BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf("%c", borderChar);
+    printf("%c\n", BorderLeft);
+    printf("\n\t\t", BorderLeft);
+
+    chooseNumber = ChooseVerify(1, 1);
+    fflush(stdin);
+    switch(chooseNumber)
+    {
+    case 0:
+        MainMenu();
+        break;
+    case 1:
+    {
+        printf("\n\t%c 请输入想要查询的书号：", BorderLeft);
+        gets(searcherStr);
+        for(k = 0; k < BookNum; k++)
+        {
+            if(StringMatch(BOOK[k].bookNum, searcherStr) == 1)
+            {
+                bookModifyNum = k;
+                resultNumber++;
+                BookPrintf(k);
+            }
+        }
+    }
+    break;
+    }
+    printf("\n\t%c 共查询到%d 本书。", BorderLeft, resultNumber);
+    printf("\n\t%c |(请精确查找，查找结果为一本书时修改信息)", BorderLeft);
+    if(resultNumber == 1)
+    {
+        printf("\n\t%c 是否修改《%s》该书信息？(0 取消| 1 确认)：", BorderLeft, BOOK[bookModifyNum].bookName);
+        chooseNumber = ChooseVerify(0, 1);
+        if(chooseNumber == 0)   // 取消
+        {
+            InformationModify(); // 返回信息修改函数
+            return;
+        }
+        else if(chooseNumber == 1)     // 信息修改
+        {
+            fflush(stdin);
+            printf("\n\n\t\t");
+            for( i = 0; i < WIDTH; i++ )
+                printf("%c", borderChar);
+            printf("\n");
+            printf("\t\t%c\t书号(%s)\n\t\t%c\n", BorderLeft, BOOK[bookModifyNum].bookNum, BorderLeft);
+            // 获取修改信息
+            printf("\t\t%c 你想修改的是？\n", BorderLeft);
+            printf("\t\t%c <-1. 书名 ->\n", BorderLeft);
+            printf("\t\t%c <-2. 作者名 ->\n", BorderLeft);
+            printf("\t\t%c <-3. 出版社 ->\n", BorderLeft);
+            printf("\t\t%c <-4. 出版时间 ->\n", BorderLeft);
+            printf("\t\t%c <-5. 价格 ->\n", BorderLeft);
+            chooseNumber = ChooseVerify(1, 5);
+            switch(chooseNumber)
+            {
+            case 0:
+            {
+                InformationModify(); // 返回信息修改函数
+                return;
+            }
+            break;
+            case 1:
+            {
+                printf("\n\t\t%c\t书名(%s)：", BorderLeft, BOOK[bookModifyNum].bookName);
+                gets(BOOK[bookModifyNum].bookName);
+            }
+            break;
+            case 2:
+            {
+                printf("\n\t\t%c\t作者名(%s)：", BorderLeft, BOOK[bookModifyNum].author);
+                gets(BOOK[bookModifyNum].author);
+            }
+            break;
+            case 3:
+            {
+                printf("\n\t\t%c\t出版社(%s)：", BorderLeft, BOOK[bookModifyNum].publishingHouse);
+                gets(BOOK[bookModifyNum].publishingHouse);
+            }
+            break;
+            case 4:
+            {
+                printf("\n\t\t%c\t出版时间(%s)(格式:YYYY-mm-dd)：", BorderLeft, BOOK[bookModifyNum].publicshingTime);
+                gets(BOOK[bookModifyNum].publicshingTime);
+                while(BOOK[bookModifyNum].publicshingTime[4] != '-' && BOOK[bookModifyNum].publicshingTime[6] != '-')
+                {
+                    printf("\n\t\t%c时间格式错误！请重新输入", BorderLeft);
+                    printf("\n\t\t%c\t出版时间(%s)(格式:YYYY-mm-dd)：", BorderLeft, BOOK[bookModifyNum].publicshingTime);
+                    gets(BOOK[bookModifyNum].publicshingTime);
+                }
+            }
+            break;
+            case 5:
+            {
+                printf("\n\t\t%c\t价格(%s)：", BorderLeft, BOOK[bookModifyNum].bookPrice);
+                gets(BOOK[bookModifyNum].bookPrice);
+            }
+            break;
+            }
+            // 重新写入文件
+            FILE *fp = NULL; // 打开文件 bookinfo.txt
+            fp = fopen("bookinfo.txt", "w+");
+            for(i = 0; i < BookNum; i++)
+            {
+                fputs(BOOK[i].bookNum, fp);
+                fputs("\n", fp);
+                fputs(BOOK[i].bookName, fp);
+                fputs("\n", fp);
+                fputs(BOOK[i].author, fp);
+                fputs("\n", fp);
+                fputs(BOOK[i].publishingHouse, fp);
+                fputs("\n", fp);
+                fputs(BOOK[i].publicshingTime, fp);
+                fputs("\n", fp);
+                fputs(BOOK[i].bookPrice, fp);
+                fputs("\n", fp);
+            }
+            fclose(fp); // 关闭文件
+        }
+        printf("\n\t%c 信息修改成功！", BorderLeft);
+        printf("\n\t\t");
+        for( i = 0; i < WIDTH; i++ )
+            printf("%c", borderChar);
+        printf("\n");
+    }
+    printf("\n\t%c 是否继续？(0 退出| 1 重新查询)：", BorderLeft);
+    chooseNumber = ChooseVerify(0, 1);
+    if(chooseNumber == 0)   // 退出
+    {
+        MainMenu(); // 返回主菜单
+    }
+    else if(chooseNumber == 1)     // 继续查询
+    {
+        InformationModify(); // 回调函数
+        return;
+    }
+
+    return;
+}
+
+void AccountManage() // 用户账号管理函数
+{
+    SystemOp("cls");
+    int chooseNumber;
+    char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
+
+    printf("\n\n\t\t");
+    for( i = 0; i < WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c\t", BorderLeft, BorderLeft);
+    printf("\t用户账号管理系统 \t|\n");
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf("%c", borderChar);
+    printf("%c\n\n", BorderLeft);
+    printf("图书馆用户总数：%d\n", UserNum);
+    for( i = 0; i < WIDTH+WIDTH/2; i++ )
+        printf("%c", borderChar);
+    printf("\n| 编号\t用户名\t密码\t性别\t年龄\t联系方式\t状态\n");
+    for(i = 0; i < UserNum; i++)
+    {
+        printf("| %03d\t", i+1);
+        printf("%s\t", USER[i].username);
+        printf("%s\t", USER[i].password);
+        printf("%s\t", USER[i].sex);
+        printf("%s\t", USER[i].age);
+        printf("%s\t", USER[i].contact);
+        if(USER[i].status == 0)
+            printf("未通过");
+        else
+            printf("已通过");
+    }
+    printf("\n");
+    for( i = 0; i < WIDTH+WIDTH/2; i++ )
+        printf("%c", borderChar);
+    printf("\n按1进入账号操作, ESC键返回主菜单");
+    chooseNumber = ChooseVerify(1, 1);
+    if(chooseNumber == 0) // 返回主菜单
+    {
+        MainMenu();
+        return;
+    }
+    printf("\n请输入想要操作的账号编号:");
+    scanf("%d", &chooseNumber);
+    chooseNumber--;
+    if(USER[chooseNumber].status == 0)
+    {
+        int chooseNumber2;
+        printf("\n该用户的状态是未通过，是否修改为通过？(1 是| 0 否)");
+        chooseNumber2 = ChooseVerify(0, 1);
+        switch(chooseNumber2)
+        {
+        case 0:  // 否,回调函数
+        {
+            AccountManage();
+            return;
+        }
+        break;
+        case 1:
+        {
+            // 修改用户信息,重新写入文件
+            USER[chooseNumber].status = 1;
+            FILE *fp = NULL; // 打开文件 userinfo.txt
+            fp = fopen("userinfo.txt", "w+");
+            for(i = 0; i < UserNum; i++)
+            {
+                fputs(USER[chooseNumber].username, fp);
+                fputs("\n", fp);
+                fputs(USER[chooseNumber].password, fp);
+                fputs("\n", fp);
+                fputs(USER[chooseNumber].age, fp);
+                fputs("\n", fp);
+                fputs("1", fp);
+                fputs("\n", fp);
+                fputs(USER[chooseNumber].sex, fp);
+                fputs("\n", fp);
+                fputs(USER[chooseNumber].contact, fp);
+                fputs("\n", fp);
+            }
+            fclose(fp); // 关闭文件
+            printf("\n修改成功！");
+            printf("| 是否继续管理账号？（1 继续| 0 返回主菜单）");
+            chooseNumber = ChooseVerify(0 , 1);
+            if(chooseNumber == 0)
+            {
+                MainMenu();
+                return;
+            }
+            else
+            {
+                AccountManage();
+                return;
+            }
+        }
+        break;
+        }
+    }
+    else
+    {
+        printf("\n该用户的状态是已通过!");
+        printf("\n| 是否继续管理账号？（1 继续| 0 返回主菜单）");
+        chooseNumber = ChooseVerify(0 , 1);
+        if(chooseNumber == 0)
+        {
+            MainMenu();
+            return;
+        }
+        else
+        {
+            AccountManage();
+            return;
+        }
+    }
+    return;
+}
+
+/// 图书馆借书系统主模块
+void BookLend() // 借阅图书
+{
+    SystemOp("cls");
+    int chooseNumber, resultNumber = 0, bookLendNum;
+    char searcherStr[55];
+    char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
+
+    printf("\n\t\t");
+    for( i = 0; i < WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c\t  ***#借阅图书#*** \t\t%c\n", BorderLeft, BorderLeft, BorderLeft);
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    printf("\t%c", '1');
+    for( i = 0; i < OpWidth; i++ )
+        printf("%c", OpLine);
+    printf("根据书号查询图书 \t|\n");
+    printf("\t\t%c", BorderLeft);
+    printf("\t%s", "ESC");
+    for( i = 0; i < OpWidth-2; i++ )
+        printf("%c", OpLine);
+    printf(" 返回主菜单 \t|\n");
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t|(请精确查找，查找结果为一本书时允许借阅|\n\t\t%c", BorderLeft, BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf("%c", borderChar);
+    printf("%c\n", BorderLeft);
+    printf("\n\t\t", BorderLeft);
+
+    chooseNumber = ChooseVerify(1, 1);
+    fflush(stdin);
+    switch(chooseNumber)
+    {
+    case 0:
+        MainMenu();
+        break;
+    case 1:
+    {
+        printf("\n\t%c 请输入想要查询的书号：", BorderLeft);
+        gets(searcherStr);
+        for(k = 0; k < BookNum; k++)
+        {
+            if(StringMatch(BOOK[k].bookNum, searcherStr) == 1)
+            {
+                bookLendNum = k;
+                resultNumber++;
+                BookPrintf(k);
+            }
+        }
+    }
+    break;
+    }
+    printf("\n\t%c 共查询到%d 本书。", BorderLeft, resultNumber);
+    printf("\n\t%c |(请精确查找，查找结果为一本书时允许借阅)", BorderLeft);
+    if(resultNumber == 1)
+    {
+        printf("\n\t%c 是否借阅《%s》？(0 取消| 1 确认)：", BorderLeft, BOOK[bookLendNum].bookName);
+        chooseNumber = ChooseVerify(0, 1);
+        if(chooseNumber == 0)   // 取消
+        {
+            BookLend(); // 返回图书借阅函数
+            return;
+        }
+        else if(chooseNumber == 1)     // 允许用户借阅这本书
+        {
+/*            // 写入文件
+            FILE *fp = NULL; // 打开文件 booklend.txt
+            fp = fopen("booklend.txt", "a+");
+            fputs(BOOK[i].bookNum, fp);
+            fputs("\n", fp);
+            fputs(BOOK[i].bookName, fp);
+            fputs("\n", fp);
+            }
+            fclose(fp); // 关闭文件
+        }
+        printf("\n\t%c 删除成功！", BorderLeft);
+        printf("\n\t\t");
+        for( i = 0; i < WIDTH; i++ )
+            printf("%c", borderChar);
+        printf("\n");
+    }
+    printf("\n\t%c 是否继续？(0 退出| 1 重新查询)：", BorderLeft);
+    chooseNumber = ChooseVerify(0, 1);
+    if(chooseNumber == 0)   // 退出
+    {
+        MainMenu(); // 返回主菜单
+    }
+    else if(chooseNumber == 1)     // 继续查询
+    {
+        InformationDelete(); // 回调函数
+        return;
+    }
+*/
+    return;
+}
+
+void BookLendStatus() // 图书借阅状态
+{
 
 }
 
-/// 配置函数模块
+void BookReturn() // 图书归还
+{
+
+}
+
+/// 功能函数模块
 char RandomNumber(char str[], int n) // 返回随机数函数
 {
     int randomChar;
@@ -861,7 +1437,7 @@ int ChooseVerify(int minNumber, int maxNumber) // 选择验证函数（!）
 {
     int chooseNumber;
     char inputChar;
-    printf("\n\t\tPlease Enter Choose: ");
+    printf("\n\t\t输入您的选择: ");
 
     inputChar = getch();
     if(inputChar == 27)
@@ -880,11 +1456,11 @@ int ChooseVerify(int minNumber, int maxNumber) // 选择验证函数（!）
     }
     if( chooseNumber >= minNumber && chooseNumber <= maxNumber )
     {
-        printf("\t\t Input Success.");
+        printf(" %d", chooseNumber);
     }
     else
     {
-        printf("\t\t Input Error!\n");
+        printf("\tInput Error!\n");
         chooseNumber = ChooseVerify(minNumber, maxNumber);
     }
     return chooseNumber;
