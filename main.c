@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <conio.h>
 #include <memory.h>
+#include <math.h>
 
 struct cookie   // 保存当前用户登陆信息
 {
@@ -33,17 +34,18 @@ struct booklend // 保存所有借书信息
 {
     char userName[55];
     char bookNum[55];
+    char startTime[55];
 };
 int WIDTH = 41; // 用户界面宽度
 int OpWidth = 12; // 用户操作宽度
-int UserNum = 0, BookNum = 0; // 用户总数, 图书总数
+int UserNum = 0, BookNum = 0, LendNum = 0; // 用户总数, 图书总数，借阅总数
 int i, j, k; // 提前定义循环变量
 char BORDER[] = { '#', '*', '+', '@', '`', '-', '='}; // 边框随机字符
 char OpLine = '-', BorderLeft = '|';
 typedef struct cookie COOKIE;
 typedef struct userinfo USERINFO;
 typedef struct bookinfo BOOKINFO;
-typedef struct booklend BOOKLEND:
+typedef struct booklend BOOKLEND;
 COOKIE userCookie; // 登录信息
 USERINFO USER[5000], CurrentUser; // 用户信息结构体数组
 BOOKINFO BOOK[5000]; // 图书信息结构体数组
@@ -57,7 +59,7 @@ void BackgroundColor(); // 背景色函数
 void SystemOp(char str[]); // 控制台操作函数
 int StringMatch(char pStr[], char qStr[]); // 字符串模糊匹配函数
 void BookPrintf(int id); // 图书信息输出函数
-int Timestamp(char time[]); // 简易时间戳函数
+long Timestamp(char time[]); // 简易时间戳函数
 
 void index(); // 主页函数
 void login(); // 登录函数
@@ -142,7 +144,7 @@ void login(int chooseNumber)
 {
     SystemOp("cls");
     char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
-    int backStatus, userChooseNumber, fileFlag, fileNum;
+    int userChooseNumber, fileFlag, fileNum;
     char fileStr[55], username[55];
 
     // 从文件读取数据，保存到结构体中
@@ -213,6 +215,7 @@ void login(int chooseNumber)
     break;
     case 2:   // 借阅者登录
     {
+        fflush(stdin);
         printf("\t借阅者登录\t\t\t%c\n", BorderLeft);
         printf("\t\t%c", BorderLeft);
         for( i = 0; i < WIDTH-2; i++ )
@@ -240,6 +243,7 @@ void login(int chooseNumber)
 
         userChooseNumber = ChooseVerify(1, 2);
 
+        fflush(stdin);
         if(userChooseNumber == 1)   // 新用户注册
         {
             // 注册函数
@@ -298,7 +302,7 @@ void UserRegister()
         }
         if(usernameFlag == 0)   // 表示用户名重复
         {
-            printf("\t\t%c\t用户名重复，请重新输入：\n");
+            printf("\t\t%c\t用户名重复，请重新输入：\n", BorderLeft);
             printf("\t\t%c\t用户名 ：", BorderLeft);
             gets(newUser.username);
         }
@@ -314,7 +318,7 @@ void UserRegister()
     // 验证密码是否一致
     while(strcmp(Password, rePassword) != 0)
     {
-        printf("\t\t%c\t密码不一致，请重新输入：\n");
+        printf("\t\t%c\t密码不一致，请重新输入：\n", BorderLeft);
         printf("\t\t%c\t密码 ：", BorderLeft);
         gets(Password);
         printf("\t\t%c\t重复密码 ：", BorderLeft);
@@ -416,6 +420,37 @@ void MainMenu()
     }
     BookNum = fileNum;
     fclose(fp);
+
+    FILE *fp2 = NULL;
+    fp2 = fopen("booklend.txt", "a+");
+    fileFlag = 0, fileNum = 0;
+    while(!feof(fp2))
+    {
+        if(fgets(fileStr, 55, fp2)!=NULL)
+        {
+            fileStr[strlen(fileStr)-1]='\0'; // 去除字符串末尾\n
+            switch(fileFlag)
+            {
+            case 0:
+                strcpy(LEND[fileNum].userName, fileStr);
+                break;
+            case 1:
+                strcpy(LEND[fileNum].bookNum, fileStr);
+                break;
+            case 2:
+                strcpy(LEND[fileNum].startTime, fileStr);
+                break;
+            }
+        }
+        fileFlag++;
+        if(fileFlag >= 3)
+        {
+            fileFlag = 0;
+            fileNum++;
+        }
+    }
+    LendNum = fileNum;
+    fclose(fp2);
 
     if(strcmp(userCookie.username, "admin") == 0)   // 管理员登录状态
     {
@@ -584,7 +619,7 @@ void MainMenu()
             BookLend();
             break; // 借阅图书
         case 3:
-            BookLandStatus();
+            BookLendStatus();
             break; // 图书借阅状态
         case 4:
             BookReturn();
@@ -633,7 +668,7 @@ void InformationEntry() // 图书信息录入函数
                 break;
             }
         }
-        printf("\t\t%c  该书号已存在，请重新输入!", BorderLeft, BorderLeft);
+        printf("\t\t%c  该书号已存在，请重新输入!", BorderLeft);
         printf("%c\n\t\t%c\t请输入您的书籍的书号：", BorderLeft, BorderLeft);
         gets(NewBook.bookNum);
     }
@@ -646,7 +681,7 @@ void InformationEntry() // 图书信息录入函数
     gets(NewBook.publishingHouse);
     printf("\t\t%c\t请输入出版时间(时间格式:YYYY-mm-dd)：", BorderLeft);
     gets(NewBook.publicshingTime);
-    while(NewBook.publicshingTime[4] != '-' && NewBook.publicshingTime[6] != '-')
+    while(NewBook.publicshingTime[4] != '-' && NewBook.publicshingTime[7] != '-')
     {
         printf("\t\t%c时间格式错误！请重新输入", BorderLeft);
         printf("\t\t%c\t请输入出版时间(时间格式:YYYY-mm-dd)：", BorderLeft);
@@ -654,7 +689,7 @@ void InformationEntry() // 图书信息录入函数
     }
     printf("\t\t%c\t请输入该书的价格：", BorderLeft);
     gets(NewBook.bookPrice);
-    printf("\t\t%c", BorderLeft, BorderLeft);
+    printf("\t\t%c", BorderLeft);
     for( i = 0; i < WIDTH-2; i++ )
         printf("%c", borderChar);
     printf("%c\n", BorderLeft);
@@ -795,7 +830,7 @@ void InformationInquiry() // 图书信息查询函数
     for( i = 0; i < WIDTH-2; i++ )
         printf("%c", borderChar);
     printf("%c\n", BorderLeft);
-    printf("\n\t\t", BorderLeft);
+    printf("\n\t\t");
 
     chooseNumber = ChooseVerify(1, 5);
     fflush(stdin);
@@ -931,7 +966,7 @@ void InformationDelete() // 图书信息删除函数
     for( i = 0; i < WIDTH-2; i++ )
         printf("%c", borderChar);
     printf("%c\n", BorderLeft);
-    printf("\n\t\t", BorderLeft);
+    printf("\n\t\t");
 
     chooseNumber = ChooseVerify(1, 1);
     fflush(stdin);
@@ -1048,7 +1083,7 @@ void InformationModify() // 图书信息修改函数
     for( i = 0; i < WIDTH-2; i++ )
         printf("%c", borderChar);
     printf("%c\n", BorderLeft);
-    printf("\n\t\t", BorderLeft);
+    printf("\n\t\t");
 
     chooseNumber = ChooseVerify(1, 1);
     fflush(stdin);
@@ -1223,6 +1258,7 @@ void AccountManage() // 用户账号管理函数
             printf("未通过");
         else
             printf("已通过");
+        printf("\n");
     }
     printf("\n");
     for( i = 0; i < WIDTH+WIDTH/2; i++ )
@@ -1274,7 +1310,7 @@ void AccountManage() // 用户账号管理函数
             fclose(fp); // 关闭文件
             printf("\n修改成功！");
             printf("| 是否继续管理账号？（1 继续| 0 返回主菜单）");
-            chooseNumber = ChooseVerify(0 , 1);
+            chooseNumber = ChooseVerify(0, 1);
             if(chooseNumber == 0)
             {
                 MainMenu();
@@ -1293,7 +1329,7 @@ void AccountManage() // 用户账号管理函数
     {
         printf("\n该用户的状态是已通过!");
         printf("\n| 是否继续管理账号？（1 继续| 0 返回主菜单）");
-        chooseNumber = ChooseVerify(0 , 1);
+        chooseNumber = ChooseVerify(0, 1);
         if(chooseNumber == 0)
         {
             MainMenu();
@@ -1315,6 +1351,7 @@ void BookLend() // 借阅图书
     int chooseNumber, resultNumber = 0, bookLendNum;
     char searcherStr[55];
     char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
+    BOOKLEND newLend;
 
     printf("\n\t\t");
     for( i = 0; i < WIDTH; i++ )
@@ -1343,7 +1380,7 @@ void BookLend() // 借阅图书
     for( i = 0; i < WIDTH-2; i++ )
         printf("%c", borderChar);
     printf("%c\n", BorderLeft);
-    printf("\n\t\t", BorderLeft);
+    printf("\n\t\t");
 
     chooseNumber = ChooseVerify(1, 1);
     fflush(stdin);
@@ -1372,7 +1409,7 @@ void BookLend() // 借阅图书
     printf("\n\t%c |(请精确查找，查找结果为一本书时允许借阅)", BorderLeft);
     if(resultNumber == 1)
     {
-        printf("\n\t%c 是否借阅《%s》？(0 取消| 1 确认)：", BorderLeft, BOOK[bookLendNum].bookName);
+        printf("\n\t%c 是否借阅《%s》？(0 取消| 1 确认)：\n", BorderLeft, BOOK[bookLendNum].bookName);
         chooseNumber = ChooseVerify(0, 1);
         if(chooseNumber == 0)   // 取消
         {
@@ -1381,45 +1418,215 @@ void BookLend() // 借阅图书
         }
         else if(chooseNumber == 1)     // 允许用户借阅这本书
         {
-/*            // 写入文件
-            FILE *fp = NULL; // 打开文件 booklend.txt
-            fp = fopen("booklend.txt", "a+");
-            fputs(BOOK[i].bookNum, fp);
-            fputs("\n", fp);
-            fputs(BOOK[i].bookName, fp);
-            fputs("\n", fp);
+            int lendFlag = 0;
+            for(i = 0; i < LendNum; i++)
+            {
+                if(strcmp(LEND[i].userName, userCookie.username) == 0 && strcmp(LEND[i].bookNum, BOOK[bookLendNum].bookNum) == 0)
+                    lendFlag = 1;
             }
-            fclose(fp); // 关闭文件
+            if(lendFlag == 1)
+            {
+                printf("\n\t%c 你已经借阅了这本书。\n", BorderLeft);
+            }
+            else
+            {
+                // 获取时间
+                time_t t;
+                struct tm * lt;
+                char timeStr[55];
+                time (&t);//获取Unix时间戳。
+                lt = localtime (&t);//转为时间结构。
+                timeStr[0] = (lt->tm_year+1900)/1000 + '0';
+                timeStr[1] = (lt->tm_year+1900)/100%10 + '0';
+                timeStr[2] = (lt->tm_year+1900)/10%10 + '0';
+                timeStr[3] = (lt->tm_year+1900)%10 + '0';
+                timeStr[4] = timeStr[7] = '-';
+                timeStr[5] = (lt->tm_mon+1)/10 + '0';
+                timeStr[6] = (lt->tm_mon+1)%10 + '0';
+                timeStr[8] = (lt->tm_mday)/10 + '0';
+                timeStr[9] = (lt->tm_mday)%10 + '0';
+                timeStr[10] = '\0';
+                strcpy(LEND[LendNum].startTime, timeStr);
+                // 写入文件
+                FILE *fp = NULL; // 打开文件 booklend.txt
+                fp = fopen("booklend.txt", "a+");
+                fputs(userCookie.username, fp);
+                fputs("\n", fp);
+                fputs(BOOK[bookLendNum].bookNum, fp);
+                fputs("\n", fp);
+                fputs(timeStr, fp);
+                fputs("\n", fp);
+                fclose(fp); // 关闭文件
+                // 保存到结构体数组
+                strcpy(LEND[LendNum].userName, userCookie.username);
+                strcpy(LEND[LendNum].bookNum, BOOK[bookLendNum].bookNum);
+                LendNum++;
+
+                printf("\n\t%c 借阅成功！  借阅时间：%d-%d-%d %d:%d:%d", BorderLeft, lt->tm_year+1900, lt->tm_mon, lt->tm_mday, lt->tm_hour, lt->tm_min, lt->tm_sec);
+                printf("\n\t\t");
+            }
         }
-        printf("\n\t%c 删除成功！", BorderLeft);
-        printf("\n\t\t");
-        for( i = 0; i < WIDTH; i++ )
-            printf("%c", borderChar);
-        printf("\n");
+
     }
-    printf("\n\t%c 是否继续？(0 退出| 1 重新查询)：", BorderLeft);
+    for( i = 0; i < WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n");
+
+    printf("\n\t%c 是否继续？(0 退出| 1 借阅)：", BorderLeft);
     chooseNumber = ChooseVerify(0, 1);
     if(chooseNumber == 0)   // 退出
     {
         MainMenu(); // 返回主菜单
     }
-    else if(chooseNumber == 1)     // 继续查询
+    else if(chooseNumber == 1)     // 继续借阅
     {
-        InformationDelete(); // 回调函数
+        BookLend(); // 回调函数
         return;
     }
-*/
     return;
 }
 
 void BookLendStatus() // 图书借阅状态
 {
+    SystemOp("cls");
+    int chooseNumber, lendNumber;
+    char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
 
+    lendNumber = 0;
+    for(i = 0; i < LendNum; i++)
+    {
+        if(strcmp(LEND[i].userName, userCookie.username) == 0)
+            lendNumber++;
+    }
+
+    printf("\n\n\t\t");
+    for( i = 0; i < WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c\t", BorderLeft, BorderLeft);
+    printf("\t#图书借阅状态# \t\t|\n");
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf("%c", borderChar);
+    printf("%c\n\n", BorderLeft);
+    printf("已借阅图书：%d\n", lendNumber);
+    for( i = 0; i < WIDTH+WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n| 书号\t书名\t\t作者\t\t出版社\t出版时间\t\t价格\n");
+    // 获取时间
+    time_t t;
+    struct tm * lt;
+    char timeStr[55];
+    time (&t);//获取Unix时间戳。
+    lt = localtime (&t);//转为时间结构。
+    timeStr[0] = (lt->tm_year+1900)/1000 + '0';
+    timeStr[1] = (lt->tm_year+1900)/100%10 + '0';
+    timeStr[2] = (lt->tm_year+1900)/10%10 + '0';
+    timeStr[3] = (lt->tm_year+1900)%10 + '0';
+    timeStr[4] = timeStr[7] = '-';
+    timeStr[5] = (lt->tm_mon+1)/10 + '0';
+    timeStr[6] = (lt->tm_mon+1)%10 + '0';
+    timeStr[8] = (lt->tm_mday)/10 + '0';
+    timeStr[9] = (lt->tm_mday)%10 + '0';
+    timeStr[10] = '\0';
+    for(i = 0; i < LendNum; i++)
+    {
+        if(strcmp(LEND[i].userName, userCookie.username) == 0)
+        {
+            for(j = 0; j < BookNum; j++)
+            {
+                if(strcmp(LEND[i].bookNum, BOOK[j].bookNum) == 0)
+                {
+                    printf("| %s\t", BOOK[j].bookNum);
+                    printf("%s\t", BOOK[j].bookName);
+                    printf("%s\t", BOOK[j].author);
+                    printf("%s\t", BOOK[j].publishingHouse);
+                    printf("%s\t", BOOK[j].publicshingTime);
+                    printf("%s\t", BOOK[j].bookPrice);
+                    puts(timeStr);
+                    printf("*%c*", LEND[i].startTime[9]);
+                    LEND[i].startTime[10] = '\0';
+                    int time1 = Timestamp(timeStr);
+                    int time2 = Timestamp(LEND[i].startTime);
+                    printf("\n<-已借阅：%d天->", time1- time2);
+                }
+
+            }
+        }
+    }
+    printf("\n");
+    for( i = 0; i < WIDTH+WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n ESC键返回主菜单");
+    chooseNumber = ChooseVerify(0, 0);
+    if(chooseNumber == 0) // 返回主菜单
+    {
+        MainMenu();
+        return;
+    }
+    return;
 }
 
 void BookReturn() // 图书归还
 {
+    SystemOp("cls");
+    int chooseNumber, lendNumber;
+    char borderChar = RandomNumber(BORDER, sizeof(BORDER)/sizeof(BORDER[0]));
 
+    lendNumber = 0;
+    for(i = 0; i < LendNum; i++)
+    {
+        if(strcmp(LEND[i].userName, userCookie.username) == 0)
+            lendNumber++;
+    }
+
+    printf("\n\n\t\t");
+    for( i = 0; i < WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c\t", BorderLeft, BorderLeft);
+    printf("\t#图书归还系统# \t|\n");
+    printf("\t\t%c", BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf(" ");
+    printf("%c\n\t\t%c", BorderLeft, BorderLeft);
+    for( i = 0; i < WIDTH-2; i++ )
+        printf("%c", borderChar);
+    printf("%c\n\n", BorderLeft);
+    printf("已借阅图书：%d\n", lendNumber);
+    for( i = 0; i < WIDTH+WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n| 书号\t书名\t\t作者\t\t出版社\t出版时间\t\t价格\n");
+    for(i = 0; i < LendNum; i++)
+    {
+        for(j = 0; j < BookNum; j++)
+        {
+            printf("| %s\t", BOOK[j].bookNum);
+            printf("%s\t", BOOK[j].bookName);
+            printf("%s\t", BOOK[j].author);
+            printf("%s\t", BOOK[j].publishingHouse);
+            printf("%s\t", BOOK[j].publicshingTime);
+            printf("%s\t", BOOK[j].bookPrice);
+        }
+    }
+    printf("\n");
+    for( i = 0; i < WIDTH+WIDTH; i++ )
+        printf("%c", borderChar);
+    printf("\n ESC键返回主菜单");
+    chooseNumber = ChooseVerify(0, 0);
+    if(chooseNumber == 0) // 返回主菜单
+    {
+        MainMenu();
+        return;
+    }
+    return;
 }
 
 /// 功能函数模块
@@ -1471,7 +1678,7 @@ void loginVerify(char username[]) // 登录验证函数
     int status;
     char password[55];
 
-    printf("\t\t\t请输入密码 :  ", BorderLeft);
+    printf("\t\t\t请输入密码 :  ");
     char tempPassword[20]= {};
     tempPassword[0]=getch();
     if (tempPassword[0]==27)
@@ -1631,14 +1838,14 @@ void BookPrintf(int id) // 图书信息输出函数
     printf("%c\n", BorderLeft);
 }
 
-int Timestamp(char time[]) // 简易时间戳函数
+long Timestamp(char time[]) // 简易时间戳函数
 {
-    /* 输入YYYY-mm-dd格式日期字符串
+    /* 输入YYYY-mm-dd格式日期字符串2019-07-03
      * 转化成简易时间戳
      * 便于时间之间比较
      */
     int year, month, day;
-    int timestamp = 0;
+    long timestamp = 0;
     int mday; // 2月是否闰月
     int months[13]= {0,31,28,31,30,31,30,31,31,30,31,30,31};
     // 转化成整型数据
@@ -1648,12 +1855,12 @@ int Timestamp(char time[]) // 简易时间戳函数
     // 转化为时间戳,以1800-01-01为基准
     for(i = 1800; i < year; i++)
     {
-        if(i%4==0 && i%100!=0 ||i %400==0)
+        if((i%4==0 && i%100!=0) ||i %400==0)
             timestamp += 366;
         else
             timestamp += 365;
     }
-    if(year%4==0 && year%100!=0 || year%400==0)
+    if((year%4==0 && year%100!=0) || year%400==0)
         mday = 29;
     else
         mday = 28;
