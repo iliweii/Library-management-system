@@ -11,7 +11,7 @@ struct cookie   // 保存当前用户登陆信息
 {
     char username[55];
 };
-struct userinfo   // 保存所有用户完整信息
+struct userinfo // 保存所有用户完整信息
 {
     char username[55], password[55];
     char age[10];
@@ -46,7 +46,7 @@ USERINFO USER[5000], CurrentUser; // 用户信息结构体数组
 BOOKINFO BOOK[5000]; // 图书信息结构体数组
 BOOKLEND LEND[5000]; // 借书信息结构体数组
 
-/* 功能函数模块 */
+/** 功能函数模块 */
 char RandomNumber(char str[], int n); // 返回随机数函数
 int ChooseVerify(int minNumber, int maxNumber); // 选择验证函数
 void loginVerify(char username[]); // 登录验证函数
@@ -61,7 +61,7 @@ void login(); // 登录函数
 void UserRegister();// 用户注册函数
 void MainMenu(); // 主菜单函数
 
-/* 图书管理系统主模块 */
+/** 图书管理系统主模块 */
 void InformationEntry(); // 图书信息录入函数
 void InformationBrowsing(); // 图书信息浏览函数
 void InformationInquiry(); // 图书信息查询函数
@@ -69,10 +69,12 @@ void InformationDelete(); // 图书信息删除函数
 void InformationModify(); // 图书信息修改函数
 void AccountManage(); // 用户账号管理函数
 
-/* 图书馆借书系统主模块 */
+/** 图书馆借书系统主模块 */
+void InformationBrowsing(); // 查阅图书
 void BookLend(); // 借阅图书
 void BookLendStatus(); // 图书借阅状态
 void BookReturn(); // 图书归还
+
 
 /// main函数 入口
 int main()
@@ -81,6 +83,14 @@ int main()
     BackgroundColor();
     // 实现用户或者管理员登录
     index();
+    /*
+     *登录完成后由index()指向mainMenu()
+     *主菜单函数自动判断用户身份还是管理员身份
+     *打印借书系统或者管理系统
+     *进入次级操作函数
+     *ESC键最终退回到index()
+     *最后退出
+    */
     return 0;
 }
 

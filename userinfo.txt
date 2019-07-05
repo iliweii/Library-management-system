@@ -10,3 +10,9 @@ liwei
 1
 male
 10086
+newuser
+md5zp0
+18
+1
+male
+19812345678
